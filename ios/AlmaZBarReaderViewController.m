@@ -15,92 +15,110 @@
 
 @implementation AlmaZBarReaderViewController
 
+- (void)viewWillAppear:(BOOL)animated {
+    [super viewWillAppear:animated];
+    [self styleNavBar];
+}
 
-- (void)viewDidLoad {
-    [super viewDidLoad];
-    // Do any additional setup after loading the view.
-    UIButton *button = [UIButton buttonWithType:UIButtonTypeRoundedRect];
-    //[button setTitle:@"Flash" forState:UIControlStateNormal];
-    [button sizeToFit];
+- (void)styleNavBar {
+
+    self.supportedOrientationsMask = ZBarOrientationMask(UIInterfaceOrientationLandscapeRight);
+    
+    [self.navigationController setNavigationBarHidden:YES animated:NO];
+    
     CGRect screenRect = [[UIScreen mainScreen] bounds];
-    //[button setContentEdgeInsets:UIEdgeInsetsMake(20, 30, 20, 30)];
-    CGRect frame;
-    if(screenRect.size.height>(screenRect.size.width)){
-        frame = CGRectMake(0,0, screenRect.size.width*(0.15), screenRect.size.height*0.15);
-        
-        //button.center = CGPointMake( 0,0);
-    }else{
-        frame = CGRectMake(0,0, screenRect.size.width*(0.10), screenRect.size.height*0.20);
-        
-        //button.center = CGPointMake(0,0);
-    }
+    CGFloat screenWidth = screenRect.size.width;
     
-    button.frame =frame;
-    button.layer.cornerRadius = 10;
-    button.clipsToBounds = YES;
-    // Set a new (x,y) point for the button's center
+    //Draw Bar
+    UINavigationBar *newNavBar = [[UINavigationBar alloc] initWithFrame:CGRectMake(0, 0, screenWidth, 64.0)];
+    [newNavBar setBarTintColor:[UIColor colorWithRed:0.11 green:0.37 blue:0.49 alpha:1.0]];
+    [newNavBar setTranslucent: NO];
     
+    UINavigationItem *title = [[UINavigationItem alloc] initWithTitle:@"Pagamentos" ];
 
-
-    //[button setBackgroundColor:[UIColor colorWithRed:.859 green:.765 blue:.616 alpha:1.0] forState:UIControlStateHighlighted];
+    UIBarButtonItem *cancelButton = [[UIBarButtonItem alloc] initWithTitle:@"Cancelar"
+                                                                          style:UIBarButtonItemStylePlain
+                                                                         target:self
+                                                                         action:@selector(cancel)];
     
-    //button.center = CGPointMake( 0,0);
-    [button addTarget:self action:@selector(buttonPressed:) forControlEvents:UIControlEventTouchUpInside];
+    title.rightBarButtonItem = cancelButton;
+    [newNavBar setItems:@[title]];
     
-    [self.view addSubview:button];
+    NSDictionary* attributes = [NSDictionary dictionaryWithObjectsAndKeys:
+                                [UIColor whiteColor], NSForegroundColorAttributeName,
+                                [UIFont fontWithName:@"TrebuchetMS" size:19.0], NSFontAttributeName,
+                                nil];
     
+    [[UINavigationBar appearance] setTitleTextAttributes: attributes];
+    [newNavBar setTitleTextAttributes: attributes];
+    
+    [cancelButton setTitleTextAttributes:[NSDictionary dictionaryWithObjectsAndKeys:
+                                           [UIColor whiteColor], NSForegroundColorAttributeName,
+                                           [UIFont fontWithName:@"TrebuchetMS" size:16.0], NSFontAttributeName,
+                                           nil]
+                              forState:UIControlStateNormal];
+    
+    [self.view addSubview:newNavBar];
 }
-- (BOOL)prefersStatusBarHidden {
-    return YES;
+
+- (void)viewDidLoad
+{
+    [super viewDidLoad];
+
+    CGRect screenRect = [[UIScreen mainScreen] bounds];
+    CGFloat screenWidth = screenRect.size.width;
+    CGFloat screenHeight = screenRect.size.height;
+    
+    //Tunning for long bar codes
+    self.readerView.showsFPS = false;
+    self.readerView.zoom = 1.0;
+    self.readerView.scanCrop = CGRectMake(0, 0.3, 1, 0.4);
+    self.readerView.tracksSymbols = YES;
+    
+    //Draw Sight
+    CGFloat xDim = screenWidth - 64.0;
+    UIView *polygonView = [[UIView alloc] initWithFrame: CGRectMake(0, 64.0, screenHeight, xDim)];
+    UIView *lineView = [[UIView alloc] initWithFrame:CGRectMake(0, (xDim / 2), screenHeight, 1)];
+    lineView.backgroundColor = [UIColor redColor];
+    [polygonView addSubview:lineView];
+    
+    self.cameraOverlayView = polygonView;
 }
 
-- (void)didReceiveMemoryWarning {
+- (BOOL)prefersStatusBarHidden
+{
+    return NO;
+}
+
+- (void)didReceiveMemoryWarning
+{
     [super didReceiveMemoryWarning];
-    // Dispose of any resources that can be recreated.
 }
-//Techedge Changes NSS fase 2
-- (void)buttonPressed: (UIButton *) button {
-    
+
+- (void)buttonPressed: (UIButton *) button
+{
     CsZBar *obj = [[CsZBar alloc] init];
-    
     [obj toggleflash];
-    
 }
 
+- (BOOL)shouldAutorotate
+{
+    return NO;
+}
 
-- (BOOL)shouldAutorotate{
-    return YES;
+- (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
+{
+    return UIInterfaceOrientationIsLandscape(interfaceOrientation);
 }
-- (void) didRotateFromInterfaceOrientation:(UIInterfaceOrientation)fromInterfaceOrientation{
-    //AlmaZBarReaderViewController.scanner.scanner.cameraOverlayView = poli
-    //NSDictionary *params = (NSDictionary*) [command argumentAtIndex:0];
-    BOOL drawSight = true;//[params objectForKey:@"drawSight"] ? [[params objectForKey:@"drawSight"] boolValue] : true;
-    if(drawSight){
-        CGRect screenRect = [[UIScreen mainScreen] bounds];
-        CGFloat screenWidth = screenRect.size.width;
-        CGFloat screenHeight = screenRect.size.height;
-        CGFloat dim = screenWidth < screenHeight ? screenWidth / 1.1 : screenHeight / 1.1;
-        UIView *polygonView = [[UIView alloc] initWithFrame: CGRectMake  ( (screenWidth/2) - (dim/2), (screenHeight/2) - (dim/2), dim, dim)];
-        //polygonView.center = self.scanReader.view.center;
-        //polygonView.layer.borderColor = [UIColor greenColor].CGColor;
-        //polygonView.layer.borderWidth = 3.0f;
-        
-        UIView *lineView = [[UIView alloc] initWithFrame:CGRectMake(0,dim / 2, dim, 1)];
-        lineView.backgroundColor = [UIColor redColor];
-        [polygonView addSubview:lineView];
-        self.cameraOverlayView = polygonView;
-        
-        
-    }
+
+- (UIInterfaceOrientation)preferredInterfaceOrientationForPresentation
+{
+    return UIInterfaceOrientationLandscapeRight;
 }
-/*
- #pragma mark - Navigation
- 
- // In a storyboard-based application, you will often want to do a little preparation before navigation
- - (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender {
- // Get the new view controller using [segue destinationViewController].
- // Pass the selected object to the new view controller.
- }
- */
+
+-(UIStatusBarStyle)preferredStatusBarStyle
+{
+    return UIStatusBarStyleLightContent;
+}
 
 @end
