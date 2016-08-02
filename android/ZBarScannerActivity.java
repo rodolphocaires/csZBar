@@ -301,7 +301,10 @@ implements SurfaceHolder.Callback {
 
         tryStopPreview();
         holder = hld;
-        tryStartPreview();
+
+        if (camera != null) {
+            tryStartPreview();
+        }
     }
     public void onConfigurationChanged(Configuration newConfig)
     {
