@@ -43,8 +43,7 @@ import net.sourceforge.zbar.Symbol;
 import net.sourceforge.zbar.SymbolSet;
 import net.sourceforge.zbar.Config;
 
-public class ZBarScannerActivity extends Activity
-implements SurfaceHolder.Callback {
+public class ZBarScannerActivity extends Activity implements SurfaceHolder.Callback {
 
     //for barcode types
     private Collection<ZBarcodeFormat> mFormats = null;
@@ -66,7 +65,6 @@ implements SurfaceHolder.Callback {
     private SurfaceView scannerSurface;
     private SurfaceHolder holder;
     private ImageScanner scanner;
-    private int surfW, surfH;
 
     // Customisable stuff
     String whichCamera;
@@ -107,8 +105,8 @@ implements SurfaceHolder.Callback {
 
 
     }
-    public void onRequestPermissionsResult(int requestCode,
-                                           String permissions[], int[] grantResults) {
+    
+    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
         switch (requestCode) {
             case CAMERA_PERMISSION_REQUEST: {
                 if (grantResults.length > 0
@@ -125,6 +123,7 @@ implements SurfaceHolder.Callback {
             // permissions this app might request
         }
     }
+    
     private void setUpCamera() {
         // If request is cancelled, the result arrays are empty.
 
@@ -144,8 +143,13 @@ implements SurfaceHolder.Callback {
             // Initiate instance variables
             autoFocusHandler = new Handler();
             scanner = new ImageScanner();
+            scanner.setConfig(0, Config.ENABLE, 0);
+            scanner.setConfig(Symbol.I25, Config.ENABLE, 1);
+            scanner.setConfig(0, Config.MIN_LEN, 44);
+            scanner.setConfig(0, Config.MAX_LEN, 44);
             scanner.setConfig(0, Config.X_DENSITY, 3);
             scanner.setConfig(0, Config.Y_DENSITY, 3);
+
 
             // Set the config for barcode formats
             for(ZBarcodeFormat format : getFormats()) {
@@ -157,9 +161,11 @@ implements SurfaceHolder.Callback {
 
             // Update view with customisable strings
             TextView view_textTitle = (TextView) findViewById(getResourceId("id/csZbarScannerTitle"));
-            TextView view_textInstructions = (TextView) findViewById(getResourceId("id/csZbarScannerInstructions"));
             view_textTitle.setText(textTitle);
+            
+            TextView view_textInstructions = (TextView) findViewById(getResourceId("id/csZbarScannerInstructions"));
             view_textInstructions.setText(textInstructions);
+            view_textInstructions.setVisibility(View.GONE);
 
             // Draw/hide the sight
             if(!drawSight) {
@@ -167,14 +173,8 @@ implements SurfaceHolder.Callback {
             }
 
             // Create preview SurfaceView
-            scannerSurface = new SurfaceView (this) {
-                @Override
-                public void onSizeChanged (int w, int h, int oldW, int oldH) {
-                    surfW = w;
-                    surfH = h;
-                    matchSurfaceToPreviewRatio();
-                }
-            };
+            scannerSurface = new SurfaceView (this) {};
+
             scannerSurface.setLayoutParams(new FrameLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.MATCH_PARENT,
@@ -192,12 +192,10 @@ implements SurfaceHolder.Callback {
             findViewById(getResourceId("id/csZbarScannerSight")).bringToFront();
             scannerView.requestLayout();
             scannerView.invalidate();
-
     }
 
     @Override
-    public void onResume ()
-    {
+    public void onResume () {
         super.onResume();
 
         try {
@@ -223,42 +221,73 @@ implements SurfaceHolder.Callback {
             return;
         }
     }
-    private void setCameraDisplayOrientation(Activity activity ,int cameraId) {
-        android.hardware.Camera.CameraInfo info =
-                new android.hardware.Camera.CameraInfo();
-        android.hardware.Camera.getCameraInfo(cameraId, info);
-        int rotation = activity.getWindowManager().getDefaultDisplay()
-                .getRotation();
-        int degrees = 0;
-        switch (rotation) {
-            case Surface.ROTATION_0: degrees = 0; break;
-            case Surface.ROTATION_90: degrees = 90; break;
-            case Surface.ROTATION_180: degrees = 180; break;
-            case Surface.ROTATION_270: degrees = 270; break;
-        }
 
-        int result;
-        if (info.facing == Camera.CameraInfo.CAMERA_FACING_FRONT) {
-            result = (info.orientation + degrees) % 360;
-            result = (360 - result) % 360;  // compensate the mirror
-        } else {  // back-facing
-            result = (info.orientation - degrees + 360) % 360;
-        }
-        
-        if (camera != null) {
-            camera.setDisplayOrientation(result);
+    private void setOrientation() {
+
+        int rotation = getWindowManager().getDefaultDisplay().getRotation();
+        Camera.Size size = camera.getParameters().getPreviewSize();
+
+        android.hardware.Camera.CameraInfo info = new android.hardware.Camera.CameraInfo();
+        android.hardware.Camera.getCameraInfo(0, info);
+
+        int orientation = 0;
+
+        switch(rotation) {
+            case 0: // '\0'
+                orientation = (info.orientation - 0 + 360) % 360;
+                camera.setDisplayOrientation(orientation);
+                scannerSurface.setLayoutParams(new FrameLayout.LayoutParams(
+                    size.height, size.width,
+                    Gravity.CENTER
+                ));
+                break;
+
+            case 1: // '\001'
+                orientation = (info.orientation - 90 + 360) % 360;
+                camera.setDisplayOrientation(orientation);
+                scannerSurface.setLayoutParams(new FrameLayout.LayoutParams(
+                    size.width, size.height,
+                    Gravity.CENTER
+                ));
+                break;
+
+            case 2: // '\002'
+                orientation = (info.orientation - 180 + 360) % 360;
+                camera.setDisplayOrientation(orientation);
+                scannerSurface.setLayoutParams(new FrameLayout.LayoutParams(
+                    size.height, size.width,
+                    Gravity.CENTER
+                ));
+                break;
+
+            case 3: // '\003'
+                orientation = (info.orientation - 270 + 360) % 360;
+                camera.setDisplayOrientation(orientation);
+                scannerSurface.setLayoutParams(new FrameLayout.LayoutParams(
+                    size.width, size.height,
+                    Gravity.CENTER
+                ));
+                break;
+
+            default:
+                orientation = (info.orientation - 0 + 360) % 360;
+                camera.setDisplayOrientation(orientation);
+                scannerSurface.setLayoutParams(new FrameLayout.LayoutParams(
+                    size.height, size.width,
+                    Gravity.CENTER
+                ));
+                break;
         }
     }
+
     @Override
-    public void onPause ()
-    {
+    public void onPause () {
         releaseCamera();
         super.onPause();
     }
 
     @Override
-    public void onDestroy ()
-    {
+    public void onDestroy () {
         if(scanner != null) scanner.destroy();
         super.onDestroy();
     }
@@ -266,8 +295,7 @@ implements SurfaceHolder.Callback {
     // Event handlers --------------------------------------------------
 
     @Override
-    public void onBackPressed ()
-    {
+    public void onBackPressed () {
         setResult(RESULT_CANCELED);
         super.onBackPressed();
     }
@@ -275,68 +303,28 @@ implements SurfaceHolder.Callback {
     // SurfaceHolder.Callback implementation ---------------------------
 
     @Override
-    public void surfaceCreated (SurfaceHolder hld)
-    {
+    public void surfaceCreated (SurfaceHolder hld) {
         tryStopPreview();
         holder = hld;
         tryStartPreview();
     }
 
     @Override
-    public void surfaceDestroyed (SurfaceHolder holder)
-    {
-        // No surface == no preview == no point being in this Activity.
-        die("The camera surface was destroyed");
+    public void surfaceDestroyed(SurfaceHolder hld) {
+
     }
 
     @Override
-    public void surfaceChanged (SurfaceHolder hld, int fmt, int w, int h)
-    {
-        // Sanity check - holder must have a surface...
-        if(hld.getSurface() == null) die("There is no camera surface");
+    public void surfaceChanged(SurfaceHolder hld, int fmt, int width, int height) {
 
-        surfW = w;
-        surfH = h;
-        matchSurfaceToPreviewRatio();
-
-        tryStopPreview();
-        holder = hld;
-
-        if (camera != null) {
-            tryStartPreview();
-        }
     }
-    public void onConfigurationChanged(Configuration newConfig)
-    {
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+
         super.onConfigurationChanged(newConfig);
-        int rotation = getWindowManager().getDefaultDisplay().getRotation();
-        switch(rotation)
-        {
-        case 0: // '\0'
-            rotation = 90;
-            break;
-
-        case 1: // '\001'
-            rotation = 0;
-            break;
-
-        case 2: // '\002'
-            rotation = 270;
-            break;
-
-        case 3: // '\003'
-            rotation = 180;
-            break;
-
-        default:
-            rotation = 90;
-            break;
-        }
-        camera.setDisplayOrientation(rotation);
-        android.hardware.Camera.Parameters params = camera.getParameters();
         tryStopPreview();
         tryStartPreview();
-
     }
 
     public void toggleFlash(View view) {
@@ -378,8 +366,7 @@ implements SurfaceHolder.Callback {
     // Continuously auto-focus -----------------------------------------
     // For API Level < 14
 
-    private AutoFocusCallback autoFocusCb = new AutoFocusCallback()
-    {
+    private AutoFocusCallback autoFocusCb = new AutoFocusCallback() {
         public void onAutoFocus(boolean success, Camera camera) {
             // some devices crash without this try/catch and cancelAutoFocus()... (#9)
             try {
@@ -389,8 +376,7 @@ implements SurfaceHolder.Callback {
         }
     };
 
-    private Runnable doAutoFocus = new Runnable()
-    {
+    private Runnable doAutoFocus = new Runnable() {
         public void run() {
             if(camera != null) camera.autoFocus(autoFocusCb);
         }
@@ -399,8 +385,8 @@ implements SurfaceHolder.Callback {
     // Camera callbacks ------------------------------------------------
 
     // Receives frames from the camera and checks for barcodes.
-    private PreviewCallback previewCb = new PreviewCallback()
-    {
+    private PreviewCallback previewCb = new PreviewCallback() {
+
         public void onPreviewFrame(byte[] data, Camera camera) {
             Camera.Parameters parameters = camera.getParameters();
             Camera.Size size = parameters.getPreviewSize();
@@ -429,54 +415,25 @@ implements SurfaceHolder.Callback {
     // Misc ------------------------------------------------------------
 
     // finish() due to error
-    private void die (String msg)
-    {
+    private void die (String msg) {
         setResult(RESULT_ERROR);
         finish();
     }
 
-    private int getResourceId (String typeAndName)
-    {
+    private int getResourceId (String typeAndName) {
+
         if(package_name == null) package_name = getApplication().getPackageName();
         if(resources == null) resources = getApplication().getResources();
         return resources.getIdentifier(typeAndName, null, package_name);
     }
 
     // Release the camera resources and state.
-    private void releaseCamera ()
-    {
+    private void releaseCamera () {
         if (camera != null) {
             autoFocusHandler.removeCallbacks(doAutoFocus);
             camera.setPreviewCallback(null);
             camera.release();
             camera = null;
-        }
-    }
-
-    // Match the aspect ratio of the preview SurfaceView with the camera's preview aspect ratio,
-    // so that the displayed preview is not stretched/squashed.
-    private void matchSurfaceToPreviewRatio () {
-        if(camera == null) return;
-        if(surfW == 0 || surfH == 0) return;
-
-        // Resize SurfaceView to match camera preview ratio (avoid stretching).
-        Camera.Parameters params = camera.getParameters();
-        Camera.Size size = params.getPreviewSize();
-        float previewRatio = (float) size.height / size.width; // swap h and w as the preview is rotated 90 degrees
-        float surfaceRatio = (float) surfW / surfH;
-
-        if(previewRatio > surfaceRatio) {
-            scannerSurface.setLayoutParams(new FrameLayout.LayoutParams(
-                surfW,
-                Math.round((float) surfW / previewRatio),
-                Gravity.CENTER
-            ));
-        } else if(previewRatio < surfaceRatio) {
-            scannerSurface.setLayoutParams(new FrameLayout.LayoutParams(
-                Math.round((float) surfH * previewRatio),
-                surfH,
-                Gravity.CENTER
-            ));
         }
     }
 
@@ -497,50 +454,17 @@ implements SurfaceHolder.Callback {
         return mFormats;
     }
 
-
     // Start the camera preview if possible.
     // If start is attempted but fails, exit with error message.
     private void tryStartPreview () {
+
+        setOrientation();
+
         if(holder != null) {
             try {
-                int rotation = getWindowManager().getDefaultDisplay().getRotation();
-                switch(rotation)
-                {
-                case 0: // '\0'
-                    rotation = 90;
-                    break;
-
-                case 1: // '\001'
-                    rotation = 0;
-                    break;
-
-                case 2: // '\002'
-                    rotation = 270;
-                    break;
-
-                case 3: // '\003'
-                    rotation = 180;
-                    break;
-
-                default:
-                    rotation = 90;
-                    break;
-                }
-                // 90 degrees rotation for Portrait orientation Activity.
-               // camera.setDisplayOrientation(rotation);
-                setCameraDisplayOrientation(this, 0);
-
                 android.hardware.Camera.Parameters camParams = camera.getParameters();
-
-                //camParams.setFlashMode(Parameters.FLASH_MODE_TORCH);
-
-                try {
-                   camParams.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
-                   camera.setParameters(camParams);
-                } catch (Exception e) {
-					// TODO: don't swallow
-                }
-
+                camParams.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
+                camera.setParameters(camParams);
                 camera.setPreviewDisplay(holder);
                 camera.setPreviewCallback(previewCb);
                 camera.startPreview();
