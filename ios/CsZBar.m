@@ -32,11 +32,6 @@
     return;
 }
 
-- (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
-{
-    return UIInterfaceOrientationIsLandscape(interfaceOrientation);
-}
-
 #pragma mark - Plugin API
 
 - (void)scan: (CDVInvokedUrlCommand*)command;
@@ -80,7 +75,13 @@
              self.scanReader.cameraFlashMode = UIImagePickerControllerCameraFlashModeAuto;
         }
         
-        self.scanReader.title = @"Pagamentos";
+        NSString *title = [params objectForKey:@"text_title"];
+        self.scanReader.title = title;
+        
+        BOOL drawSight = [params objectForKey:@"drawSight"] ? [[params objectForKey:@"drawSight"] boolValue] : true;
+        self.scanReader.drawSight = drawSight;
+        
+        self.scanReader.preferredOrientation = [params objectForKey:@"preferred_orientation"];
         
         [self.viewController presentViewController:self.scanReader animated:YES completion:nil];
     }
@@ -151,6 +152,5 @@
                                 messageAsString: @"Failed"]];
     }];
 }
-
 
 @end

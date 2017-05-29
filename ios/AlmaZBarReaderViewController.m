@@ -21,8 +21,6 @@
 }
 
 - (void)styleNavBar {
-
-    self.supportedOrientationsMask = ZBarOrientationMask(UIInterfaceOrientationLandscapeRight);
     
     [self.navigationController setNavigationBarHidden:YES animated:NO];
     
@@ -34,7 +32,7 @@
     [newNavBar setBarTintColor:[UIColor colorWithRed:0.11 green:0.37 blue:0.49 alpha:1.0]];
     [newNavBar setTranslucent: NO];
     
-    UINavigationItem *title = [[UINavigationItem alloc] initWithTitle:@"Pagamentos" ];
+    UINavigationItem *title = [[UINavigationItem alloc] initWithTitle:[self title] ];
 
     UIBarButtonItem *cancelButton = [[UIBarButtonItem alloc] initWithTitle:@"Cancelar"
                                                                           style:UIBarButtonItemStylePlain
@@ -69,20 +67,47 @@
     CGFloat screenWidth = screenRect.size.width;
     CGFloat screenHeight = screenRect.size.height;
     
-    //Tunning for long bar codes
-    self.readerView.showsFPS = false;
-    self.readerView.zoom = 1.0;
-    self.readerView.scanCrop = CGRectMake(0, 0.3, 1, 0.4);
-    self.readerView.tracksSymbols = YES;
+    //Draw Sight
+    if ([self drawSight])
+    {
+        CGFloat xDim = screenWidth - 64.0;
+        UIView *polygonView = [[UIView alloc] initWithFrame: CGRectMake(0, 64.0, screenHeight, xDim)];
+        UIView *lineView = [[UIView alloc] initWithFrame:CGRectMake(0, (xDim / 2), screenHeight, 1)];
+        lineView.backgroundColor = [UIColor redColor];
+        [polygonView addSubview:lineView];
+    
+        self.cameraOverlayView = polygonView;
+    }
+
+    if (![[self preferredOrientation] isEqualToString:(@"portrait")])
+    {
+        //Tunning for long bar codes
+        self.readerView.showsFPS = false;
+        self.readerView.zoom = 1.0;
+        self.readerView.scanCrop = CGRectMake(0, 0.3, 1, 0.4);
+        self.readerView.tracksSymbols = YES;
+    }
+}
+
+- (void) didRotateFromInterfaceOrientation:(UIInterfaceOrientation)fromInterfaceOrientation
+{
+    [self styleNavBar];
+    
+    CGRect screenRect = [[UIScreen mainScreen] bounds];
+    CGFloat screenWidth = screenRect.size.width;
+    CGFloat screenHeight = screenRect.size.height;
     
     //Draw Sight
-    CGFloat xDim = screenWidth - 64.0;
-    UIView *polygonView = [[UIView alloc] initWithFrame: CGRectMake(0, 64.0, screenHeight, xDim)];
-    UIView *lineView = [[UIView alloc] initWithFrame:CGRectMake(0, (xDim / 2), screenHeight, 1)];
-    lineView.backgroundColor = [UIColor redColor];
-    [polygonView addSubview:lineView];
+    if ([self drawSight])
+    {
+        CGFloat xDim = screenHeight - 64.0;
+        UIView *polygonView = [[UIView alloc] initWithFrame: CGRectMake(0, 64.0, screenWidth, xDim)];
+        UIView *lineView = [[UIView alloc] initWithFrame:CGRectMake(0, (xDim / 2), screenWidth, 1)];
+        lineView.backgroundColor = [UIColor redColor];
+        [polygonView addSubview:lineView];
     
-    self.cameraOverlayView = polygonView;
+        self.cameraOverlayView = polygonView;
+    }
 }
 
 - (BOOL)prefersStatusBarHidden
@@ -103,17 +128,19 @@
 
 - (BOOL)shouldAutorotate
 {
-    return NO;
-}
-
-- (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
-{
-    return UIInterfaceOrientationIsLandscape(interfaceOrientation);
+    return YES;
 }
 
 - (UIInterfaceOrientation)preferredInterfaceOrientationForPresentation
 {
-    return UIInterfaceOrientationLandscapeRight;
+    if ([[self preferredOrientation] isEqualToString:(@"portrait")])
+    {
+        return UIInterfaceOrientationPortrait;
+    }
+    else
+    {
+        return UIInterfaceOrientationLandscapeRight;
+    }
 }
 
 -(UIStatusBarStyle)preferredStatusBarStyle

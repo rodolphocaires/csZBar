@@ -10,4 +10,7 @@
 
 @interface AlmaZBarReaderViewController : ZBarReaderViewController
 
+@property (nonatomic) BOOL drawSight;
+@property (nonatomic) NSString* preferredOrientation;
+
 @end
