@@ -77,6 +77,10 @@
         
         NSString *title = [params objectForKey:@"text_title"];
         self.scanReader.title = title;
+
+        NSString *headerAlpha = [params objectForKey:@"header_alpha"];
+        NSString *headerColor = [params objectForKey:@"header_color"];
+        self.scanHeader.headerColor = "#" + headerAlpha + headerColor;
         
         BOOL drawSight = [params objectForKey:@"drawSight"] ? [[params objectForKey:@"drawSight"] boolValue] : true;
         self.scanReader.drawSight = drawSight;

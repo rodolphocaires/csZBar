@@ -26,6 +26,7 @@ import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
+import android.graphics.Color;
 import android.widget.TextView;
 import android.content.pm.PackageManager;
 import android.view.Surface;
@@ -136,6 +137,8 @@ public class ZBarScannerActivity extends Activity implements SurfaceHolder.Callb
             catch (JSONException e) { params = new JSONObject(); }
             String textTitle = params.optString("text_title");
             String textInstructions = params.optString("text_instructions");
+            String headerAlpha = params.optString("header_alpha");
+            String headerColor = params.optString("header_color");
             Boolean drawSight = params.optBoolean("drawSight", true);
             whichCamera = params.optString("camera");
             flashMode = params.optString("flash");
@@ -161,6 +164,7 @@ public class ZBarScannerActivity extends Activity implements SurfaceHolder.Callb
 
             // Update view with customisable strings
             TextView view_textTitle = (TextView) findViewById(getResourceId("id/csZbarScannerTitle"));
+            view_textTitle.setBackgroundColor(Color.parseColor(headerColor));
             view_textTitle.setText(textTitle);
             
             TextView view_textInstructions = (TextView) findViewById(getResourceId("id/csZbarScannerInstructions"));
