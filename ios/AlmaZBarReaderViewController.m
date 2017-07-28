@@ -20,6 +20,37 @@
     [self styleNavBar];
 }
 
+- (UIColor *)getUIColorObjectFromHexString:(NSString *)hexStr alpha:(CGFloat)alpha
+{
+  // Convert hex string to an integer
+  unsigned int hexint = [self intFromHexString:hexStr];
+
+  // Create color object, specifying alpha as well
+  UIColor *color =
+    [UIColor colorWithRed:((CGFloat) ((hexint & 0xFF0000) >> 16))/255
+    green:((CGFloat) ((hexint & 0xFF00) >> 8))/255
+    blue:((CGFloat) (hexint & 0xFF))/255
+    alpha:alpha];
+
+  return color;
+}
+
+- (unsigned int)intFromHexString:(NSString *)hexStr
+{
+  unsigned int hexInt = 0;
+
+  // Create scanner
+  NSScanner *scanner = [NSScanner scannerWithString:hexStr];
+
+  // Tell scanner to skip the # character
+  [scanner setCharactersToBeSkipped:[NSCharacterSet characterSetWithCharactersInString:@"#"]];
+
+  // Scan hex value
+  [scanner scanHexInt:&hexInt];
+
+  return hexInt;
+}
+
 - (void)styleNavBar {
     
     [self.navigationController setNavigationBarHidden:YES animated:NO];
@@ -29,7 +60,13 @@
     
     //Draw Bar
     UINavigationBar *newNavBar = [[UINavigationBar alloc] initWithFrame:CGRectMake(0, 0, screenWidth, 64.0)];
-    [newNavBar setBarTintColor:[UIColor colorWithRed:0.11 green:0.37 blue:0.49 alpha:1.0]];
+    
+    // TODO Take color from variable
+    // NSDictionary *params = (NSDictionary*) [command argumentAtIndex:0];
+    // NSString *headerColor = [params objectForKey:@"header_color"];
+    // [newNavBar setBarTintColor:[UIColor getUIColorObjectFromHexString:headerColor alpha:1]];
+    [newNavBar setBarTintColor:[UIColor colorWithRed:0.11 green:0.37 blue:0.49 alpha:1.0]];    
+
     [newNavBar setTranslucent: NO];
     
     UINavigationItem *title = [[UINavigationItem alloc] initWithTitle:[self title] ];
