@@ -12,5 +12,6 @@
 
 @property (nonatomic) BOOL drawSight;
 @property (nonatomic) NSString* preferredOrientation;
+@property (nonatomic) UIColor* headerColor;
 
 @end
